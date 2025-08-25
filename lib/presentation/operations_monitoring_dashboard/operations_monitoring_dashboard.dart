@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
-import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
+import '../../widgets/responsive_layout_wrapper.dart';
 import './widgets/inventory_flow_chart_widget.dart';
 import './widgets/operations_metrics_widget.dart';
 import './widgets/operations_table_widget.dart';
@@ -19,6 +18,7 @@ class OperationsMonitoringDashboard extends StatefulWidget {
 
 class _OperationsMonitoringDashboardState
     extends State<OperationsMonitoringDashboard> with TickerProviderStateMixin {
+  int _currentNavIndex = 3; // Operations Monitoring Dashboard index
   late TabController _tabController;
   int _currentBottomNavIndex = 3; // Operations tab
   bool _isConnected = true;
@@ -43,6 +43,28 @@ class _OperationsMonitoringDashboardState
   ];
 
   final List<int> _refreshIntervals = [5, 15, 30]; // minutes
+
+  void _handleNavigationTap(int index) {
+    setState(() {
+      _currentNavIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(
+            context, '/executive-overview-dashboard');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/hr-management-dashboard');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/sales-performance-dashboard');
+        break;
+      case 3:
+        // Current screen - Operations Monitoring Dashboard
+        break;
+    }
+  }
 
   @override
   void initState() {
@@ -77,73 +99,100 @@ class _OperationsMonitoringDashboardState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
-      appBar: CustomAppBar(
-        title: 'Operations Monitoring',
-        isConnected: _isConnected,
-        actions: [
-          GestureDetector(
-            onTap: () => _showLocationSelector(),
-            child: Container(
-              margin: EdgeInsets.only(right: 2.w),
-              padding: EdgeInsets.symmetric(horizontal: 3.w, vertical: 1.h),
-              decoration: BoxDecoration(
-                color: AppTheme.lightTheme.colorScheme.primary
-                    .withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CustomIconWidget(
-                    iconName: 'location_on',
-                    color: AppTheme.lightTheme.colorScheme.primary,
-                    size: 16,
-                  ),
-                  SizedBox(width: 1.w),
-                  Text(
-                    _selectedLocation.split(' - ').first,
-                    style: AppTheme.lightTheme.textTheme.bodySmall?.copyWith(
-                      color: AppTheme.lightTheme.colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildGlobalControls(),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Responsive layout based on screen width
-                if (constraints.maxWidth > 1200) {
-                  return _buildDesktopLayout();
-                } else if (constraints.maxWidth > 768) {
-                  return _buildTabletLayout();
-                } else {
-                  return _buildMobileLayout();
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: CustomBottomBar(
-        currentIndex: _currentBottomNavIndex,
-        onTap: (index) {
-          setState(() {
-            _currentBottomNavIndex = index;
-          });
-        },
-      ),
-      floatingActionButton: _buildQuickActionFAB(),
+    return ResponsiveLayoutWrapper(
+      currentIndex: _currentNavIndex,
+      onNavigationTap: _handleNavigationTap,
+      title: 'Operations Monitoring',
+      body: _buildDashboardBody(),
+      appBar: context.isMobile ? _buildMobileAppBar() : null,
     );
+  }
+
+  PreferredSizeWidget _buildMobileAppBar() {
+    return AppBar(
+      title: Text(
+        'Operations Monitoring',
+        style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: AppTheme.lightTheme.colorScheme.surface,
+      elevation: 2,
+    );
+  }
+
+  Widget _buildDashboardBody() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Operations Metrics
+          OperationsMetricsWidget(
+              // ... keep existing widget properties ...
+              ),
+          SizedBox(height: context.responsiveSpacing),
+
+          // Responsive Content Layout
+          _buildResponsiveContent(),
+          SizedBox(height: context.responsiveSpacing),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResponsiveContent() {
+    if (context.isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 7,
+            child: Column(
+              children: [
+                InventoryFlowChartWidget(),
+                SizedBox(height: context.responsiveSpacing),
+                OperationsTableWidget(),
+              ],
+            ),
+          ),
+          SizedBox(width: context.responsiveSpacing),
+          Expanded(
+            flex: 5,
+            child: TaskManagementWidget(),
+          ),
+        ],
+      );
+    } else if (context.isTablet) {
+      return Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: InventoryFlowChartWidget(),
+              ),
+              SizedBox(width: context.responsiveSpacing * 0.75),
+              Expanded(
+                flex: 4,
+                child: TaskManagementWidget(),
+              ),
+            ],
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          OperationsTableWidget(),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          TaskManagementWidget(),
+          SizedBox(height: context.responsiveSpacing),
+          InventoryFlowChartWidget(),
+          SizedBox(height: context.responsiveSpacing),
+          OperationsTableWidget(),
+        ],
+      );
+    }
   }
 
   Widget _buildGlobalControls() {

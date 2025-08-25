@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
-import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
+import '../../widgets/responsive_layout_wrapper.dart';
 import './widgets/pipeline_funnel_widget.dart';
 import './widgets/quick_actions_widget.dart';
 import './widgets/sales_filters_widget.dart';
@@ -20,7 +19,8 @@ class SalesPerformanceDashboard extends StatefulWidget {
 }
 
 class _SalesPerformanceDashboardState extends State<SalesPerformanceDashboard>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
+  int _currentNavIndex = 2; // Sales Performance Dashboard index
   late TabController _tabController;
   bool _isConnected = true;
   String _selectedTerritory = 'All';
@@ -311,6 +311,29 @@ class _SalesPerformanceDashboardState extends State<SalesPerformanceDashboard>
     'Last Quarter'
   ];
 
+  void _handleNavigationTap(int index) {
+    setState(() {
+      _currentNavIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(
+            context, '/executive-overview-dashboard');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/hr-management-dashboard');
+        break;
+      case 2:
+        // Current screen - Sales Performance Dashboard
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(
+            context, '/operations-monitoring-dashboard');
+        break;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -325,115 +348,190 @@ class _SalesPerformanceDashboardState extends State<SalesPerformanceDashboard>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    return ResponsiveLayoutWrapper(
+      currentIndex: _currentNavIndex,
+      onNavigationTap: _handleNavigationTap,
+      title: 'Sales Performance',
+      body: _buildDashboardBody(),
+      appBar: context.isMobile ? _buildMobileAppBar() : null,
+    );
+  }
 
-    return Scaffold(
-      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(
-        title: 'Sales Performance',
-        isConnected: _isConnected,
-        actions: [
-          IconButton(
-            onPressed: _refreshData,
-            icon: CustomIconWidget(
-              iconName: 'refresh',
-              color: colorScheme.onSurface,
-              size: 24,
-            ),
-            tooltip: 'Refresh data',
+  PreferredSizeWidget _buildMobileAppBar() {
+    return AppBar(
+      title: Text(
+        'Sales Performance',
+        style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: AppTheme.lightTheme.colorScheme.surface,
+      elevation: 2,
+    );
+  }
+
+  Widget _buildDashboardBody() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Sales Filters
+          SalesFiltersWidget(
+            selectedTerritory: _selectedTerritory,
+            selectedRep: _selectedRep,
+            selectedPeriod: _selectedPeriod,
+            territories: _territories,
+            salesReps: _salesRepsList,
+            periods: _periods,
+            onTerritoryChanged: (territory) {
+              setState(() {
+                _selectedTerritory = territory;
+              });
+            },
+            onRepChanged: (rep) {
+              setState(() {
+                _selectedRep = rep;
+              });
+            },
+            onPeriodChanged: (period) {
+              setState(() {
+                _selectedPeriod = period;
+              });
+            },
+            onResetFilters: () {
+              setState(() {
+                _selectedTerritory = 'All';
+                _selectedRep = 'All';
+                _selectedPeriod = 'This Month';
+              });
+            },
           ),
-          IconButton(
-            onPressed: _exportData,
-            icon: CustomIconWidget(
-              iconName: 'file_download',
-              color: colorScheme.onSurface,
-              size: 24,
-            ),
-            tooltip: 'Export data',
+          SizedBox(height: context.responsiveSpacing),
+
+          // Sales KPI Cards
+          SalesKpiCardWidget(
+            title: 'Current Revenue',
+            value: '\$2.4M',
+            change: '+12.5%',
+            isPositive: true,
+            target: '\$2.8M',
+            sparklineData: [1.8, 2.0, 1.9, 2.2, 2.1, 2.3, 2.4],
           ),
+          SizedBox(height: context.responsiveSpacing),
+
+          // Responsive Content Layout
+          _buildResponsiveContent(),
+          SizedBox(height: context.responsiveSpacing),
         ],
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Filters
-            SalesFiltersWidget(
-              selectedTerritory: _selectedTerritory,
-              selectedRep: _selectedRep,
-              selectedPeriod: _selectedPeriod,
-              territories: _territories,
-              salesReps: _salesRepsList,
-              periods: _periods,
-              onTerritoryChanged: (territory) {
-                setState(() {
-                  _selectedTerritory = territory;
-                });
-              },
-              onRepChanged: (rep) {
-                setState(() {
-                  _selectedRep = rep;
-                });
-              },
-              onPeriodChanged: (period) {
-                setState(() {
-                  _selectedPeriod = period;
-                });
-              },
-              onResetFilters: () {
-                setState(() {
-                  _selectedTerritory = 'All';
-                  _selectedRep = 'All';
-                  _selectedPeriod = 'This Month';
-                });
-              },
-            ),
-            // Tab bar
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 4.w),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Team Performance'),
-                ],
-                labelColor: colorScheme.primary,
-                unselectedLabelColor:
-                    colorScheme.onSurface.withValues(alpha: 0.6),
-                indicatorColor: colorScheme.primary,
-                dividerColor: Colors.transparent,
-              ),
-            ),
-            SizedBox(height: 2.h),
-            // Tab content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildOverviewTab(),
-                  _buildTeamPerformanceTab(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showQuickActions,
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        child: CustomIconWidget(
-          iconName: 'add',
-          color: colorScheme.onPrimary,
-          size: 24,
-        ),
-      ),
     );
+  }
+
+  Widget _buildResponsiveContent() {
+    if (context.isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 8,
+            child: Column(
+              children: [
+                PipelineFunnelWidget(
+                  funnelData: _pipelineData,
+                  onDealMoved: _handleDealMoved,
+                ),
+                SizedBox(height: context.responsiveSpacing),
+                TopOpportunitiesWidget(
+                  opportunities: _topOpportunities,
+                  onOpportunityTapped: _handleOpportunityTapped,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: context.responsiveSpacing),
+          Expanded(
+            flex: 4,
+            child: Column(
+              children: [
+                SalesLeaderboardWidget(
+                  salesReps: _salesReps,
+                  selectedPeriod: _leaderboardPeriod,
+                  onPeriodChanged: (period) {
+                    setState(() {
+                      _leaderboardPeriod = period;
+                    });
+                  },
+                ),
+                SizedBox(height: context.responsiveSpacing),
+                QuickActionsWidget(),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else if (context.isTablet) {
+      return Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: PipelineFunnelWidget(
+                  funnelData: _pipelineData,
+                  onDealMoved: _handleDealMoved,
+                ),
+              ),
+              SizedBox(width: context.responsiveSpacing * 0.75),
+              Expanded(
+                flex: 4,
+                child: SalesLeaderboardWidget(
+                  salesReps: _salesReps,
+                  selectedPeriod: _leaderboardPeriod,
+                  onPeriodChanged: (period) {
+                    setState(() {
+                      _leaderboardPeriod = period;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          TopOpportunitiesWidget(
+            opportunities: _topOpportunities,
+            onOpportunityTapped: _handleOpportunityTapped,
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          QuickActionsWidget(),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          PipelineFunnelWidget(
+            funnelData: _pipelineData,
+            onDealMoved: _handleDealMoved,
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          SalesLeaderboardWidget(
+            salesReps: _salesReps,
+            selectedPeriod: _leaderboardPeriod,
+            onPeriodChanged: (period) {
+              setState(() {
+                _leaderboardPeriod = period;
+              });
+            },
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          TopOpportunitiesWidget(
+            opportunities: _topOpportunities,
+            onOpportunityTapped: _handleOpportunityTapped,
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          QuickActionsWidget(),
+        ],
+      );
+    }
   }
 
   Widget _buildOverviewTab() {

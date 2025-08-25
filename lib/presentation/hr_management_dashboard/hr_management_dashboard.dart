@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
+import '../../widgets/responsive_layout_wrapper.dart';
 import './widgets/attendance_heatmap_widget.dart';
 import './widgets/employee_performance_grid_widget.dart';
 import './widgets/hr_global_controls_widget.dart';
@@ -18,7 +19,7 @@ class HrManagementDashboard extends StatefulWidget {
 class _HrManagementDashboardState extends State<HrManagementDashboard>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  int _currentBottomNavIndex = 1; // HR Management Dashboard index
+  int _currentNavIndex = 1; // HR Management Dashboard index
   String selectedEmployeeGroup = 'All Employees';
   String selectedPayPeriod = 'Current Month';
   String selectedLocation = 'All Locations';
@@ -39,53 +40,42 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
     setState(() {
       selectedEmployeeGroup = group;
     });
-    // Refresh data based on selected group
   }
 
   void _handlePayPeriodChange(String period) {
     setState(() {
       selectedPayPeriod = period;
     });
-    // Refresh data based on selected period
   }
 
   void _handleLocationChange(String location) {
     setState(() {
       selectedLocation = location;
     });
-    // Refresh data based on selected location
   }
 
   void _handleMetricTapped(String metricKey) {
-    // Navigate to detailed view or show drill-down
     switch (metricKey) {
       case 'attendance':
-        // Show attendance details
         break;
       case 'leave_requests':
-        // Show leave requests details
         break;
       case 'new_hires':
-        // Show new hires details
         break;
       case 'turnover':
-        // Show turnover analysis
         break;
     }
   }
 
   void _handleDateSelected(DateTime date) {
     // Handle attendance heatmap date selection
-    // Show detailed attendance for selected date
   }
 
   void _handleApprovalAction(Map<String, dynamic> approval, String action) {
-    // Handle approval/rejection actions
     setState(() {
       // Update approval status
     });
 
-    // Show confirmation
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -101,7 +91,6 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
   }
 
   void _handleEmployeeSelected(Map<String, dynamic> employee) {
-    // Navigate to employee details or show employee profile
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -110,12 +99,11 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
     );
   }
 
-  void _handleBottomNavTap(int index) {
+  void _handleNavigationTap(int index) {
     setState(() {
-      _currentBottomNavIndex = index;
+      _currentNavIndex = index;
     });
 
-    // Navigate to different dashboards
     switch (index) {
       case 0:
         Navigator.pushReplacementNamed(
@@ -136,292 +124,239 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'HR Management',
-          style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w600,
+    return ResponsiveLayoutWrapper(
+      currentIndex: _currentNavIndex,
+      onNavigationTap: _handleNavigationTap,
+      title: 'HR Management Dashboard',
+      body: _buildDashboardBody(),
+      floatingActionButton: _buildFloatingActionButton(),
+      appBar: context.isMobile ? _buildMobileAppBar() : null,
+    );
+  }
+
+  PreferredSizeWidget _buildMobileAppBar() {
+    return AppBar(
+      title: Text(
+        'HR Management',
+        style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: AppTheme.lightTheme.colorScheme.surface,
+      elevation: 2,
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: CustomIconWidget(
+            iconName: 'mic',
+            size: ResponsiveSize.width(context, 6.w, 5.w, 4.w),
+            color: AppTheme.lightTheme.colorScheme.primary,
           ),
         ),
-        backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-        elevation: 2,
-        actions: [
-          IconButton(
-            onPressed: () {
-              // Voice search functionality
-            },
-            icon: CustomIconWidget(
-              iconName: 'mic',
-              size: 6.w,
-              color: AppTheme.lightTheme.colorScheme.primary,
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              // Notifications
-            },
-            icon: Stack(
-              children: [
-                CustomIconWidget(
-                  iconName: 'notifications',
-                  size: 6.w,
-                  color: AppTheme.lightTheme.colorScheme.onSurface,
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    width: 2.w,
-                    height: 2.w,
-                    decoration: BoxDecoration(
-                      color: AppTheme.lightTheme.colorScheme.error,
-                      shape: BoxShape.circle,
-                    ),
+        IconButton(
+          onPressed: () {},
+          icon: Stack(
+            children: [
+              CustomIconWidget(
+                iconName: 'notifications',
+                size: ResponsiveSize.width(context, 6.w, 5.w, 4.w),
+                color: AppTheme.lightTheme.colorScheme.onSurface,
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  width: ResponsiveSize.width(context, 2.w, 1.5.w, 1.w),
+                  height: ResponsiveSize.width(context, 2.w, 1.5.w, 1.w),
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightTheme.colorScheme.error,
+                    shape: BoxShape.circle,
                   ),
                 ),
-              ],
-            ),
-          ),
-          SizedBox(width: 2.w),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(height: 2.h),
-              // Global Controls
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4.w),
-                child: HrGlobalControlsWidget(
-                  onEmployeeGroupChanged: _handleEmployeeGroupChange,
-                  onPayPeriodChanged: _handlePayPeriodChange,
-                  onLocationChanged: _handleLocationChange,
-                ),
               ),
-              SizedBox(height: 3.h),
-              // Primary Metrics Row
-              HrMetricsRowWidget(
-                onMetricTapped: _handleMetricTapped,
-              ),
-              SizedBox(height: 3.h),
-              // Main Content Area - Responsive Layout
-              100.w > 900
-                  ? _buildDesktopLayout()
-                  : 100.w > 600
-                      ? _buildTabletLayout()
-                      : _buildMobileLayout(),
-              SizedBox(height: 3.h),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentBottomNavIndex,
-        onTap: _handleBottomNavTap,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: AppTheme.lightTheme.colorScheme.surface,
-        selectedItemColor: AppTheme.lightTheme.colorScheme.primary,
-        unselectedItemColor:
-            AppTheme.lightTheme.colorScheme.onSurface.withValues(alpha: 0.6),
-        items: [
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'dashboard',
-              size: 6.w,
-              color: _currentBottomNavIndex == 0
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurface
-                      .withValues(alpha: 0.6),
-            ),
-            label: 'Overview',
+        SizedBox(width: context.responsivePadding / 2),
+      ],
+    );
+  }
+
+  Widget _buildDashboardBody() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Global Controls
+          HrGlobalControlsWidget(
+            onEmployeeGroupChanged: _handleEmployeeGroupChange,
+            onPayPeriodChanged: _handlePayPeriodChange,
+            onLocationChanged: _handleLocationChange,
           ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'people',
-              size: 6.w,
-              color: _currentBottomNavIndex == 1
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurface
-                      .withValues(alpha: 0.6),
-            ),
-            label: 'HR',
+          SizedBox(height: context.responsiveSpacing),
+
+          // Primary Metrics Row
+          HrMetricsRowWidget(
+            onMetricTapped: _handleMetricTapped,
           ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'trending_up',
-              size: 6.w,
-              color: _currentBottomNavIndex == 2
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurface
-                      .withValues(alpha: 0.6),
-            ),
-            label: 'Sales',
-          ),
-          BottomNavigationBarItem(
-            icon: CustomIconWidget(
-              iconName: 'monitor_heart',
-              size: 6.w,
-              color: _currentBottomNavIndex == 3
-                  ? AppTheme.lightTheme.colorScheme.primary
-                  : AppTheme.lightTheme.colorScheme.onSurface
-                      .withValues(alpha: 0.6),
-            ),
-            label: 'Operations',
-          ),
+          SizedBox(height: context.responsiveSpacing),
+
+          // Main Content Area - Responsive Layout
+          _buildResponsiveContent(),
+          SizedBox(height: context.responsiveSpacing),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Quick add employee or quick action
-          _showQuickActionMenu();
-        },
-        backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-        child: CustomIconWidget(
-          iconName: 'add',
-          size: 6.w,
-          color: AppTheme.lightTheme.colorScheme.onPrimary,
-        ),
       ),
     );
   }
 
+  Widget _buildResponsiveContent() {
+    if (context.isDesktop) {
+      return _buildDesktopLayout();
+    } else if (context.isTablet) {
+      return _buildTabletLayout();
+    } else {
+      return _buildMobileLayout();
+    }
+  }
+
   Widget _buildDesktopLayout() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Main content area (10 columns)
-          Expanded(
-            flex: 10,
-            child: Column(
-              children: [
-                AttendanceHeatmapWidget(
-                  onDateSelected: _handleDateSelected,
-                ),
-                SizedBox(height: 3.h),
-                EmployeePerformanceGridWidget(
-                  onEmployeeSelected: _handleEmployeeSelected,
-                ),
-              ],
-            ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 8,
+          child: Column(
+            children: [
+              AttendanceHeatmapWidget(
+                onDateSelected: _handleDateSelected,
+              ),
+              SizedBox(height: context.responsiveSpacing),
+              EmployeePerformanceGridWidget(
+                onEmployeeSelected: _handleEmployeeSelected,
+              ),
+            ],
           ),
-          SizedBox(width: 4.w),
-          // Right panel (6 columns)
-          Expanded(
-            flex: 6,
-            child: PendingApprovalsWidget(
-              onApprovalAction: _handleApprovalAction,
-            ),
+        ),
+        SizedBox(width: context.responsiveSpacing),
+        Expanded(
+          flex: 4,
+          child: PendingApprovalsWidget(
+            onApprovalAction: _handleApprovalAction,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildTabletLayout() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 7,
-                child: AttendanceHeatmapWidget(
-                  onDateSelected: _handleDateSelected,
-                ),
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 7,
+              child: AttendanceHeatmapWidget(
+                onDateSelected: _handleDateSelected,
               ),
-              SizedBox(width: 3.w),
-              Expanded(
-                flex: 5,
-                child: PendingApprovalsWidget(
-                  onApprovalAction: _handleApprovalAction,
-                ),
+            ),
+            SizedBox(width: context.responsiveSpacing * 0.75),
+            Expanded(
+              flex: 5,
+              child: PendingApprovalsWidget(
+                onApprovalAction: _handleApprovalAction,
               ),
-            ],
-          ),
-          SizedBox(height: 3.h),
-          EmployeePerformanceGridWidget(
-            onEmployeeSelected: _handleEmployeeSelected,
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+        SizedBox(height: context.responsiveSpacing),
+        EmployeePerformanceGridWidget(
+          onEmployeeSelected: _handleEmployeeSelected,
+        ),
+      ],
     );
   }
 
   Widget _buildMobileLayout() {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4.w),
-      child: Column(
-        children: [
-          // Priority: Pending Approvals first on mobile
-          PendingApprovalsWidget(
-            onApprovalAction: _handleApprovalAction,
-          ),
-          SizedBox(height: 3.h),
-          AttendanceHeatmapWidget(
-            onDateSelected: _handleDateSelected,
-          ),
-          SizedBox(height: 3.h),
-          EmployeePerformanceGridWidget(
-            onEmployeeSelected: _handleEmployeeSelected,
-          ),
-        ],
+    return Column(
+      children: [
+        PendingApprovalsWidget(
+          onApprovalAction: _handleApprovalAction,
+        ),
+        SizedBox(height: context.responsiveSpacing),
+        AttendanceHeatmapWidget(
+          onDateSelected: _handleDateSelected,
+        ),
+        SizedBox(height: context.responsiveSpacing),
+        EmployeePerformanceGridWidget(
+          onEmployeeSelected: _handleEmployeeSelected,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return FloatingActionButton(
+      onPressed: _showQuickActionMenu,
+      backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+      child: CustomIconWidget(
+        iconName: 'add',
+        size: ResponsiveSize.width(context, 6.w, 5.w, 4.w),
+        color: AppTheme.lightTheme.colorScheme.onPrimary,
       ),
     );
   }
 
   Widget _buildEmployeeDetailsSheet(Map<String, dynamic> employee) {
     return Container(
-      height: 80.h,
+      height: ResponsiveSize.height(context, 80.h, 70.h, 60.h),
       decoration: BoxDecoration(
         color: AppTheme.lightTheme.colorScheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(5.w)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(context.responsiveRadius * 2),
+        ),
       ),
       child: Column(
         children: [
           // Handle bar
           Container(
-            width: 10.w,
-            height: 1.h,
-            margin: EdgeInsets.symmetric(vertical: 2.h),
+            width: ResponsiveSize.width(context, 10.w, 8.w, 6.w),
+            height: ResponsiveSize.height(context, 1.h, 0.8.h, 0.5.h),
+            margin: EdgeInsets.symmetric(vertical: context.responsivePadding),
             decoration: BoxDecoration(
               color: AppTheme.lightTheme.colorScheme.outline
                   .withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(0.5.h),
+              borderRadius: BorderRadius.circular(context.responsiveRadius),
             ),
           ),
-          // Employee details content
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(4.w),
+              padding: EdgeInsets.all(context.responsivePadding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Container(
-                        width: 20.w,
-                        height: 20.w,
+                        width: ResponsiveSize.width(context, 20.w, 15.w, 12.w),
+                        height: ResponsiveSize.width(context, 20.w, 15.w, 12.w),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10.w),
+                          borderRadius: BorderRadius.circular(
+                              context.responsiveRadius * 2),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10.w),
+                          borderRadius: BorderRadius.circular(
+                              context.responsiveRadius * 2),
                           child: CustomImageWidget(
                             imageUrl: employee['photo'] as String,
-                            width: 20.w,
-                            height: 20.w,
+                            width:
+                                ResponsiveSize.width(context, 20.w, 15.w, 12.w),
+                            height:
+                                ResponsiveSize.width(context, 20.w, 15.w, 12.w),
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
-                      SizedBox(width: 4.w),
+                      SizedBox(width: context.responsivePadding),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,6 +366,8 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
                               style: AppTheme.lightTheme.textTheme.headlineSmall
                                   ?.copyWith(
                                 fontWeight: FontWeight.w700,
+                                fontSize: ResponsiveSize.fontSize(
+                                    context, 20, 22, 24),
                               ),
                             ),
                             Text(
@@ -439,6 +376,8 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
                                   ?.copyWith(
                                 color: AppTheme.lightTheme.colorScheme.primary,
                                 fontWeight: FontWeight.w500,
+                                fontSize: ResponsiveSize.fontSize(
+                                    context, 16, 18, 18),
                               ),
                             ),
                             Text(
@@ -447,6 +386,8 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
                                   ?.copyWith(
                                 color: AppTheme.lightTheme.colorScheme.onSurface
                                     .withValues(alpha: 0.7),
+                                fontSize: ResponsiveSize.fontSize(
+                                    context, 14, 15, 16),
                               ),
                             ),
                           ],
@@ -454,32 +395,27 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
                       ),
                     ],
                   ),
-                  SizedBox(height: 3.h),
-                  // Contact information and quick actions
+                  SizedBox(height: context.responsiveSpacing),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            // Call employee
-                          },
+                          onPressed: () {},
                           icon: CustomIconWidget(
                             iconName: 'phone',
-                            size: 4.w,
+                            size: ResponsiveSize.width(context, 4.w, 3.w, 2.w),
                             color: AppTheme.lightTheme.colorScheme.onPrimary,
                           ),
                           label: Text('Call'),
                         ),
                       ),
-                      SizedBox(width: 2.w),
+                      SizedBox(width: context.responsivePadding / 2),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            // Email employee
-                          },
+                          onPressed: () {},
                           icon: CustomIconWidget(
                             iconName: 'email',
-                            size: 4.w,
+                            size: ResponsiveSize.width(context, 4.w, 3.w, 2.w),
                             color: AppTheme.lightTheme.colorScheme.primary,
                           ),
                           label: Text('Email'),
@@ -501,10 +437,12 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: EdgeInsets.all(4.w),
+        padding: EdgeInsets.all(context.responsivePadding),
         decoration: BoxDecoration(
           color: AppTheme.lightTheme.colorScheme.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(5.w)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(context.responsiveRadius * 2),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -513,61 +451,34 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
               'Quick Actions',
               style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
+                fontSize: ResponsiveSize.fontSize(context, 20, 22, 24),
               ),
             ),
-            SizedBox(height: 3.h),
+            SizedBox(height: context.responsiveSpacing),
             Row(
               children: [
                 Expanded(
-                  child: _buildQuickActionButton(
-                    'Add Employee',
-                    'person_add',
-                    () {
-                      Navigator.pop(context);
-                      // Navigate to add employee screen
-                    },
-                  ),
-                ),
-                SizedBox(width: 2.w),
+                    child: _buildQuickActionButton('Add Employee', 'person_add',
+                        () => Navigator.pop(context))),
+                SizedBox(width: context.responsivePadding / 2),
                 Expanded(
-                  child: _buildQuickActionButton(
-                    'Leave Request',
-                    'event_busy',
-                    () {
-                      Navigator.pop(context);
-                      // Navigate to leave request screen
-                    },
-                  ),
-                ),
+                    child: _buildQuickActionButton('Leave Request',
+                        'event_busy', () => Navigator.pop(context))),
               ],
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: context.responsivePadding / 2),
             Row(
               children: [
                 Expanded(
-                  child: _buildQuickActionButton(
-                    'Attendance',
-                    'check_circle',
-                    () {
-                      Navigator.pop(context);
-                      // Navigate to attendance screen
-                    },
-                  ),
-                ),
-                SizedBox(width: 2.w),
+                    child: _buildQuickActionButton('Attendance', 'check_circle',
+                        () => Navigator.pop(context))),
+                SizedBox(width: context.responsivePadding / 2),
                 Expanded(
-                  child: _buildQuickActionButton(
-                    'Reports',
-                    'assessment',
-                    () {
-                      Navigator.pop(context);
-                      // Navigate to reports screen
-                    },
-                  ),
-                ),
+                    child: _buildQuickActionButton(
+                        'Reports', 'assessment', () => Navigator.pop(context))),
               ],
             ),
-            SizedBox(height: 2.h),
+            SizedBox(height: context.responsivePadding / 2),
           ],
         ),
       ),
@@ -579,10 +490,10 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(4.w),
+        padding: EdgeInsets.all(context.responsivePadding),
         decoration: BoxDecoration(
           color: AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(3.w),
+          borderRadius: BorderRadius.circular(context.responsiveRadius),
           border: Border.all(
             color:
                 AppTheme.lightTheme.colorScheme.primary.withValues(alpha: 0.3),
@@ -592,15 +503,16 @@ class _HrManagementDashboardState extends State<HrManagementDashboard>
           children: [
             CustomIconWidget(
               iconName: icon,
-              size: 8.w,
+              size: ResponsiveSize.width(context, 8.w, 6.w, 4.w),
               color: AppTheme.lightTheme.colorScheme.primary,
             ),
-            SizedBox(height: 1.h),
+            SizedBox(height: context.responsivePadding / 4),
             Text(
               title,
               style: AppTheme.lightTheme.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppTheme.lightTheme.colorScheme.primary,
+                fontSize: ResponsiveSize.fontSize(context, 12, 13, 14),
               ),
               textAlign: TextAlign.center,
             ),

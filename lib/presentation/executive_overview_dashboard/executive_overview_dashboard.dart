@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../core/app_export.dart';
-import '../../widgets/custom_app_bar.dart';
-import '../../widgets/custom_bottom_bar.dart';
+import '../../widgets/responsive_layout_wrapper.dart';
 import './widgets/alert_feed_widget.dart';
 import './widgets/date_filter_widget.dart';
 import './widgets/department_performance_widget.dart';
@@ -20,12 +19,13 @@ class ExecutiveOverviewDashboard extends StatefulWidget {
 
 class _ExecutiveOverviewDashboardState
     extends State<ExecutiveOverviewDashboard> {
+  int _currentNavIndex = 0; // Executive Overview Dashboard index
+
   String _selectedPeriod = 'MTD';
   DateTime? _startDate;
   DateTime? _endDate;
   String _selectedDepartment = 'All Departments';
   bool _showComparison = false;
-  int _currentNavIndex = 0;
 
   // Mock data for KPIs
   final List<Map<String, dynamic>> _kpiData = [
@@ -185,95 +185,178 @@ class _ExecutiveOverviewDashboardState
     'Operations',
   ];
 
+  void _handleNavigationTap(int index) {
+    setState(() {
+      _currentNavIndex = index;
+    });
+
+    switch (index) {
+      case 0:
+        // Current screen - Executive Overview Dashboard
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/hr-management-dashboard');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/sales-performance-dashboard');
+        break;
+      case 3:
+        Navigator.pushReplacementNamed(
+            context, '/operations-monitoring-dashboard');
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    return ResponsiveLayoutWrapper(
+      currentIndex: _currentNavIndex,
+      onNavigationTap: _handleNavigationTap,
+      title: 'Executive Overview',
+      body: _buildDashboardBody(),
+      appBar: context.isMobile ? _buildMobileAppBar() : null,
+    );
+  }
 
-    return Scaffold(
-      backgroundColor: AppTheme.lightTheme.scaffoldBackgroundColor,
-      appBar: CustomAppBar(
-        title: 'Executive Overview',
-        isConnected: true,
-        actions: [
-          PopupMenuButton<String>(
-            icon: CustomIconWidget(
-              iconName: 'more_vert',
-              color: colorScheme.onSurface,
-              size: 24,
-            ),
-            onSelected: _handleMenuAction,
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'refresh',
-                child: Row(
-                  children: [
-                    Icon(Icons.refresh, size: 20),
-                    SizedBox(width: 12),
-                    Text('Refresh Data'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'export',
-                child: Row(
-                  children: [
-                    Icon(Icons.file_download, size: 20),
-                    SizedBox(width: 12),
-                    Text('Export Dashboard'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    Icon(Icons.settings, size: 20),
-                    SizedBox(width: 12),
-                    Text('Dashboard Settings'),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        color: colorScheme.primary,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.all(4.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Global Filters Section
-              _buildFiltersSection(),
-              SizedBox(height: 4.h),
-
-              // KPI Cards Section
-              _buildKpiSection(),
-              SizedBox(height: 4.h),
-
-              // Main Content Section (Chart + Alerts)
-              _buildMainContentSection(),
-              SizedBox(height: 4.h),
-
-              // Department Performance Section
-              DepartmentPerformanceWidget(
-                departmentData: _departmentData,
-                onExport: _exportDepartmentData,
-              ),
-              SizedBox(height: 8.h), // Extra space for bottom navigation
-            ],
-          ),
+  PreferredSizeWidget _buildMobileAppBar() {
+    return AppBar(
+      title: Text(
+        'Executive Overview',
+        style: AppTheme.lightTheme.textTheme.titleLarge?.copyWith(
+          fontWeight: FontWeight.w600,
         ),
       ),
-      bottomNavigationBar: CustomBottomBar(
-        currentIndex: _currentNavIndex,
-        onTap: _handleBottomNavTap,
+      backgroundColor: AppTheme.lightTheme.colorScheme.surface,
+      elevation: 2,
+    );
+  }
+
+  Widget _buildDashboardBody() {
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Date Filter
+          DateFilterWidget(
+            selectedPeriod: _selectedPeriod,
+            onPeriodChanged: (period) {
+              setState(() {
+                _selectedPeriod = period;
+              });
+            },
+            startDate: _startDate,
+            endDate: _endDate,
+            onDateRangeChanged: (range) {
+              setState(() {
+                _startDate = range?.start;
+                _endDate = range?.end;
+              });
+            },
+          ),
+          SizedBox(height: context.responsiveSpacing),
+
+          // KPI Cards
+          KpiCardWidget(
+            title: 'Total Revenue',
+            value: '\$2.4M',
+            change: '+12.5% vs last month',
+            isPositive: true,
+            icon: Icons.attach_money,
+            onTap: () => _handleKpiTap('Total Revenue'),
+          ),
+          SizedBox(height: context.responsiveSpacing),
+
+          // Responsive Content Layout
+          _buildResponsiveContent(),
+          SizedBox(height: context.responsiveSpacing),
+        ],
       ),
     );
+  }
+
+  Widget _buildResponsiveContent() {
+    if (context.isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 7,
+            child: Column(
+              children: [
+                RevenueChartWidget(
+                  revenueData: _revenueData,
+                  productivityData: _productivityData,
+                  onExport: _exportChartData,
+                ),
+                SizedBox(height: context.responsiveSpacing),
+                DepartmentPerformanceWidget(
+                  departmentData: _departmentData,
+                  onExport: _exportDepartmentData,
+                ),
+              ],
+            ),
+          ),
+          SizedBox(width: context.responsiveSpacing),
+          Expanded(
+            flex: 5,
+            child: AlertFeedWidget(
+              alerts: _alertsData,
+              onViewAll: _viewAllAlerts,
+            ),
+          ),
+        ],
+      );
+    } else if (context.isTablet) {
+      return Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: RevenueChartWidget(
+                  revenueData: _revenueData,
+                  productivityData: _productivityData,
+                  onExport: _exportChartData,
+                ),
+              ),
+              SizedBox(width: context.responsiveSpacing * 0.75),
+              Expanded(
+                flex: 4,
+                child: AlertFeedWidget(
+                  alerts: _alertsData,
+                  onViewAll: _viewAllAlerts,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          DepartmentPerformanceWidget(
+            departmentData: _departmentData,
+            onExport: _exportDepartmentData,
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          RevenueChartWidget(
+            revenueData: _revenueData,
+            productivityData: _productivityData,
+            onExport: _exportChartData,
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          AlertFeedWidget(
+            alerts: _alertsData,
+            onViewAll: _viewAllAlerts,
+          ),
+          SizedBox(height: context.responsiveSpacing),
+          DepartmentPerformanceWidget(
+            departmentData: _departmentData,
+            onExport: _exportDepartmentData,
+          ),
+        ],
+      );
+    }
   }
 
   Widget _buildFiltersSection() {
