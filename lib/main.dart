@@ -1,54 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:sizer/sizer.dart';
+import 'screens/dashboard_screen.dart';
 
-import '../core/app_export.dart';
-import '../widgets/custom_error_widget.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // 🚨 CRITICAL: Custom error handling - DO NOT REMOVE
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return CustomErrorWidget(
-      errorDetails: details,
-    );
-  };
-  // 🚨 CRITICAL: Updated device orientation to support web landscape - DO NOT REMOVE
-  Future.wait([
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ])
-  ]).then((value) {
-    runApp(MyApp());
-  });
+void main() {
+  runApp(const HiveQApp());
 }
 
-class MyApp extends StatelessWidget {
+class HiveQApp extends StatelessWidget {
+  const HiveQApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Sizer(builder: (context, orientation, screenType) {
-      return MaterialApp(
-        title: 'hiveq_mobile',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.light,
-        // 🚨 CRITICAL: NEVER REMOVE OR MODIFY
-        builder: (context, child) {
-          return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(1.0),
-            ),
-            child: child!,
-          );
-        },
-        // 🚨 END CRITICAL SECTION
-        debugShowCheckedModeBanner: false,
-        routes: AppRoutes.routes,
-        initialRoute: AppRoutes.initial,
-      );
-    });
+    return MaterialApp(
+      title: 'HiveQ Dashboard',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+        fontFamily: 'Inter',
+        scaffoldBackgroundColor: Colors.grey[50],
+      ),
+      home: const DashboardScreen(),
+    );
   }
 }
