@@ -1,4 +1,4 @@
-import 'package:admindashboard/models/meetings.dart';
+import 'package:admindashboard/models/meeting.dart';
 import 'package:flutter/material.dart';
 
 import '../shared/avatar_group.dart';

@@ -48,6 +48,7 @@ dev_dependencies:
 
   table_calendar: ^3.0.9
   # intl: ^0.18.11
+  feather_icons: ^1.2.0
 
   # Feature dependencies - safe to modify
   cached_network_image: ^3.3.1
